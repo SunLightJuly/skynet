@@ -105,17 +105,23 @@ main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	// initialize for short string table
 	luaS_initshr();
+	// initialize struct of skynet_node
 	skynet_globalinit();
+	// initialize struct of skynet_env which contains a stack of lua vm
 	skynet_env_init();
 
+	// call sigaction() to set to ignore signal "SIGPIPE"
 	sigign();
 
 	struct skynet_config config;
 
+	// only use for load config
 	struct lua_State *L = luaL_newstate();
 	luaL_openlibs(L);	// link lua lib
 
+	// load config from file
 	int err = luaL_loadstring(L, load_config);
 	assert(err == LUA_OK);
 	lua_pushstring(L, config_file);
@@ -128,6 +134,7 @@ main(int argc, char *argv[]) {
 	}
 	_init_env(L);
 
+	// set skynet_config
 	config.thread =  optint("thread",8);
 	config.module_path = optstring("cpath","./cservice/?.so");
 	config.harbor = optint("harbor", 1);
@@ -139,6 +146,7 @@ main(int argc, char *argv[]) {
 
 	lua_close(L);
 
+	// start skynet server with config
 	skynet_start(&config);
 	skynet_globalexit();
 	luaS_exitshr();
